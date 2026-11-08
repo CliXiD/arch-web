@@ -14,11 +14,30 @@ export interface paths {
         /** A page of edges */
         get: operations["list-edges"];
         put?: never;
-        post?: never;
+        /** Create an edge (editor of the source node's team, or admin) */
+        post: operations["create-edge"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/edges/{uid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an edge */
+        delete: operations["delete-edge"];
+        options?: never;
+        head?: never;
+        /** Replace an edge's attributes */
+        patch: operations["update-edge"];
         trace?: never;
     };
     "/api/v1/environments": {
@@ -31,11 +50,30 @@ export interface paths {
         /** Environments */
         get: operations["list-environments"];
         put?: never;
-        post?: never;
+        /** Create an environment */
+        post: operations["create-environment"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/environments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an environment that holds no node */
+        delete: operations["delete-environment"];
+        options?: never;
+        head?: never;
+        /** Rename or re-sort an environment */
+        patch: operations["update-environment"];
         trace?: never;
     };
     "/api/v1/graph": {
@@ -47,6 +85,23 @@ export interface paths {
         };
         /** One environment's compact graph (gzip when accepted) */
         get: operations["get-graph"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A node's change_log rows and its edges' rows, newest first */
+        get: operations["get-history"];
         put?: never;
         post?: never;
         delete?: never;
@@ -82,7 +137,8 @@ export interface paths {
         /** A page of nodes */
         get: operations["list-nodes"];
         put?: never;
-        post?: never;
+        /** Create a node (editor of the owning team, or admin) */
+        post: operations["create-node"];
         delete?: never;
         options?: never;
         head?: never;
@@ -100,10 +156,12 @@ export interface paths {
         get: operations["get-node"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete a node and every edge from or to it */
+        delete: operations["delete-node"];
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update a node: each field present replaces the stored value */
+        patch: operations["update-node"];
         trace?: never;
     };
     "/api/v1/teams": {
@@ -116,11 +174,30 @@ export interface paths {
         /** Teams */
         get: operations["list-teams"];
         put?: never;
-        post?: never;
+        /** Create a team */
+        post: operations["create-team"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/teams/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a team that owns no node */
+        delete: operations["delete-team"];
+        options?: never;
+        head?: never;
+        /** Rename a team */
+        patch: operations["update-team"];
         trace?: never;
     };
     "/api/v1/types": {
@@ -178,6 +255,34 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Change: {
+            /** @enum {string} */
+            action: "create" | "update" | "delete";
+            /** @description Subject of the token; for a service account, its client id. */
+            actor: string;
+            /** @enum {string} */
+            actor_kind: "user" | "service";
+            /** @description Username; for a service account, its client id. */
+            actor_name: string;
+            /** @description The entity after the change; null on delete. */
+            after: {
+                [key: string]: unknown;
+            } | null;
+            /** Format: date-time */
+            at: string;
+            /** @description The entity before the change; null on create. */
+            before: {
+                [key: string]: unknown;
+            } | null;
+            /** @enum {string} */
+            entity: "node" | "edge" | "type" | "team" | "environment";
+            /** @description Node <environment>/<id>, edge uid, team or environment id. */
+            entity_key: string;
+            /** Format: int64 */
+            id: number;
+            /** @enum {string} */
+            source: "ui" | "yaml" | "discovery" | "import";
+        };
         Edge: {
             attributes: {
                 [key: string]: unknown;
@@ -199,10 +304,29 @@ export interface components {
             /** Format: int64 */
             version: number;
         };
+        EdgeCreate: {
+            /** @description Checked against the type's attributes_schema and for secrets. */
+            attributes?: {
+                [key: string]: unknown;
+            };
+            environment: string;
+            /** @description Source node id, in the environment. */
+            from: string;
+            /** @description Target node id, in the environment. */
+            to: string;
+            /** @description Edge type id. */
+            type: string;
+        };
         EdgePage: {
             items: components["schemas"]["Edge"][];
             /** @description Cursor of the next page; null on the last page. */
             next_cursor: string | null;
+        };
+        EdgePatch: {
+            /** @description Replaces every attribute. */
+            attributes: {
+                [key: string]: unknown;
+            };
         };
         EdgeType: {
             /** @description Allowed (from kind, to kind) pairs. */
@@ -221,8 +345,25 @@ export interface components {
             /** Format: int64 */
             sort: number;
         };
+        EnvironmentCreate: {
+            id: string;
+            name: string;
+            /**
+             * Format: int32
+             * @description Display order; unique.
+             */
+            sort: number;
+        };
         EnvironmentList: {
             items: components["schemas"]["Environment"][];
+        };
+        EnvironmentPatch: {
+            name?: string;
+            /**
+             * Format: int32
+             * @description Display order; unique.
+             */
+            sort?: number;
         };
         ErrorDetail: {
             /** @description Where the error occurred, e.g. 'body.items[3].tags' or 'path.thing-id' */
@@ -289,6 +430,49 @@ export interface components {
             tags: string[];
             type: string;
         };
+        HistoryPage: {
+            items: components["schemas"]["Change"][];
+            /** @description Cursor of the next page; null on the last page. */
+            next_cursor: string | null;
+        };
+        InUseProblem: {
+            /**
+             * Format: int64
+             * @description Number of nodes owned by the team, or held by the environment.
+             */
+            count: number;
+            /**
+             * @description A human-readable explanation specific to this occurrence of the problem.
+             * @example Property foo is required but is missing.
+             */
+            detail?: string;
+            /** @description Optional list of individual error details */
+            errors?: components["schemas"]["ErrorDetail"][] | null;
+            /**
+             * Format: uri
+             * @description A URI reference that identifies the specific occurrence of the problem.
+             * @example https://example.com/error-log/abc123
+             */
+            instance?: string;
+            /**
+             * Format: int64
+             * @description HTTP status code
+             * @example 400
+             */
+            status?: number;
+            /**
+             * @description A short, human-readable summary of the problem type. This value should not change between occurrences of the error.
+             * @example Bad Request
+             */
+            title?: string;
+            /**
+             * Format: uri
+             * @description A URI reference to human-readable documentation for the error.
+             * @default about:blank
+             * @example https://example.com/errors/example
+             */
+            type: string;
+        };
         KindPair: {
             /** @enum {string} */
             from: "application" | "infrastructure" | "network" | "external" | "team";
@@ -335,10 +519,37 @@ export interface components {
             /** Format: int64 */
             version: number;
         };
+        NodeCreate: {
+            /** @description Checked against the type's attributes_schema and for secrets. */
+            attributes?: {
+                [key: string]: unknown;
+            };
+            description?: string;
+            environment: string;
+            /** @description Unique in the environment. */
+            id: string;
+            name: string;
+            /** @description Owning team id. */
+            owner: string;
+            tags?: string[];
+            /** @description Node type id. */
+            type: string;
+        };
         NodePage: {
             items: components["schemas"]["Node"][];
             /** @description Cursor of the next page; null on the last page. */
             next_cursor: string | null;
+        };
+        NodePatch: {
+            /** @description Replaces every attribute. */
+            attributes?: {
+                [key: string]: unknown;
+            };
+            description?: string;
+            name?: string;
+            /** @description Owning team id; needs rights on the old and the new team. */
+            owner?: string;
+            tags?: string[];
         };
         NodeType: {
             /** @description JSON Schema of the node attributes. */
@@ -373,8 +584,15 @@ export interface components {
             id: string;
             name: string;
         };
+        TeamCreate: {
+            id: string;
+            name: string;
+        };
         TeamList: {
             items: components["schemas"]["Team"][];
+        };
+        TeamPatch: {
+            name: string;
         };
         Types: {
             edge_types: components["schemas"]["EdgeType"][];
@@ -476,6 +694,309 @@ export interface operations {
             };
         };
     };
+    "create-edge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EdgeCreate"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Edge"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "delete-edge": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The current version, quoted, as in the ETag. Required: 428 without it, 412 when it is not the current version. */
+                "If-Match"?: string;
+            };
+            path: {
+                uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "update-edge": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The current version, quoted, as in the ETag. Required: 428 without it, 412 when it is not the current version. */
+                "If-Match"?: string;
+            };
+            path: {
+                uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EdgePatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Edge"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "list-environments": {
         parameters: {
             query?: never;
@@ -541,6 +1062,283 @@ export interface operations {
             };
         };
     };
+    "create-environment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnvironmentCreate"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Environment"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "delete-environment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict: still used by nodes (`/problems/in-use`, with `count`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["InUseProblem"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "update-environment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnvironmentPatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Environment"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "get-graph": {
         parameters: {
             query: {
@@ -560,6 +1358,91 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Graph"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-history": {
+        parameters: {
+            query: {
+                /** @description The entity whose history is read; only node in this version. */
+                entity: "node";
+                /** @description The node's environment. */
+                environment: string;
+                /** @description The node's id. */
+                id: string;
+                /** @description Page size. */
+                limit?: number;
+                /** @description Opaque cursor from a previous page's next_cursor. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryPage"];
                 };
             };
             /** @description Unauthorized */
@@ -772,6 +1655,94 @@ export interface operations {
             };
         };
     };
+    "create-node": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NodeCreate"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Node"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "get-node": {
         parameters: {
             query?: never;
@@ -859,6 +1830,223 @@ export interface operations {
             };
         };
     };
+    "delete-node": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The current version, quoted, as in the ETag. Required: 428 without it, 412 when it is not the current version. */
+                "If-Match"?: string;
+            };
+            path: {
+                environment: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "update-node": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description The current version, quoted, as in the ETag. Required: 428 without it, 412 when it is not the current version. */
+                "If-Match"?: string;
+            };
+            path: {
+                environment: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NodePatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Node"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Precondition Failed */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "list-teams": {
         parameters: {
             query?: never;
@@ -897,6 +2085,274 @@ export interface operations {
             };
             /** @description Request Entity Too Large */
             413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "create-team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TeamCreate"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Team"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "delete-team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Conflict: still used by nodes (`/problems/in-use`, with `count`) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["InUseProblem"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "update-team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TeamPatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Team"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
