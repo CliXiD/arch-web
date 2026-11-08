@@ -33,6 +33,17 @@ The realm's `arch-web` client accepts redirects to `http://localhost:5173/*` onl
 works on that port. Tokens are kept in memory, so a reload signs in again (Keycloak returns at
 once while its session lives).
 
+## Session
+
+A `401` from the API signs in again at most once per 60 s. The time of the last automatic sign-in
+is kept in `sessionStorage` under `arch.reauth.at` (epoch milliseconds only, never a token or a
+claim). A second `401` within 60 s shows "Your session was rejected by the API. Try signing in
+again." with "Sign in again" and "Sign out" instead of redirecting again, so a token the API keeps
+rejecting cannot loop. A failed silent refresh still signs in again at once.
+
+A `503 /problems/auth-unavailable` (the API has not loaded Keycloak's signing keys yet) shows
+"Sign-in is unavailable, try again"; "Try again" asks the API again.
+
 ## Configuration
 
 At start-up the app fetches `GET /config.json` from its own origin:

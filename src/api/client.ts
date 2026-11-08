@@ -26,7 +26,7 @@ type Options = {
   /** API origin; requests go to `${baseUrl}/api/v1/...`. */
   baseUrl: string;
   accessToken: () => string | undefined;
-  /** Called on every 401, after which the user is sent back to sign in. */
+  /** Called on every 401; the app signs in again at most once per 60 s, then shows the rejected state. */
   onUnauthorized: () => void;
   fetch?: typeof fetch;
 };
