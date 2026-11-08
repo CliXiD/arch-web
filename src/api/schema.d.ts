@@ -4,6 +4,57 @@
  */
 
 export interface paths {
+    "/api/v1/edges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A page of edges */
+        get: operations["list-edges"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/environments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Environments */
+        get: operations["list-environments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One environment's compact graph (gzip when accepted) */
+        get: operations["get-graph"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -13,6 +64,74 @@ export interface paths {
         };
         /** The caller's identity, roles and teams */
         get: operations["get-me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/nodes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A page of nodes */
+        get: operations["list-nodes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/nodes/{environment}/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One node */
+        get: operations["get-node"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/teams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Teams */
+        get: operations["list-teams"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Node and edge types */
+        get: operations["list-types"];
         put?: never;
         post?: never;
         delete?: never;
@@ -59,6 +178,52 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Edge: {
+            attributes: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            created_at: string;
+            environment: string;
+            /** @description Source node id. */
+            from: string;
+            /** @enum {string} */
+            source: "ui" | "yaml" | "discovery" | "import";
+            /** @description Target node id. */
+            to: string;
+            type: string;
+            /** Format: uuid */
+            uid: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** Format: int64 */
+            version: number;
+        };
+        EdgePage: {
+            items: components["schemas"]["Edge"][];
+            /** @description Cursor of the next page; null on the last page. */
+            next_cursor: string | null;
+        };
+        EdgeType: {
+            /** @description Allowed (from kind, to kind) pairs. */
+            allowed: components["schemas"]["KindPair"][];
+            /** @description JSON Schema of the edge attributes. */
+            attributes_schema: {
+                [key: string]: unknown;
+            };
+            builtin: boolean;
+            id: string;
+            name: string;
+        };
+        Environment: {
+            id: string;
+            name: string;
+            /** Format: int64 */
+            sort: number;
+        };
+        EnvironmentList: {
+            items: components["schemas"]["Environment"][];
+        };
         ErrorDetail: {
             /** @description Where the error occurred, e.g. 'body.items[3].tags' or 'path.thing-id' */
             location?: string;
@@ -100,6 +265,36 @@ export interface components {
              */
             type: string;
         };
+        Graph: {
+            edges: components["schemas"]["GraphEdge"][];
+            environment: string;
+            nodes: components["schemas"]["GraphNode"][];
+        };
+        GraphEdge: {
+            attributes: {
+                [key: string]: unknown;
+            };
+            from: string;
+            to: string;
+            type: string;
+            /** Format: uuid */
+            uid: string;
+        };
+        GraphNode: {
+            id: string;
+            /** @enum {string} */
+            kind: "application" | "infrastructure" | "network" | "external" | "team";
+            name: string;
+            owner: string;
+            tags: string[];
+            type: string;
+        };
+        KindPair: {
+            /** @enum {string} */
+            from: "application" | "infrastructure" | "network" | "external" | "team";
+            /** @enum {string} */
+            to: "application" | "infrastructure" | "network" | "external" | "team";
+        };
         Me: {
             /** @enum {string} */
             actor_kind: "user" | "service";
@@ -113,6 +308,48 @@ export interface components {
             subject: string;
             /** @description Teams from the token's teams claim; empty when absent. */
             teams: string[];
+        };
+        Node: {
+            attributes: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            created_at: string;
+            description: string;
+            environment: string;
+            id: string;
+            /**
+             * @description Fixed by the type.
+             * @enum {string}
+             */
+            kind: "application" | "infrastructure" | "network" | "external" | "team";
+            name: string;
+            /** @description Owning team id. */
+            owner: string;
+            /** @enum {string} */
+            source: "ui" | "yaml" | "discovery" | "import";
+            tags: string[];
+            type: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** Format: int64 */
+            version: number;
+        };
+        NodePage: {
+            items: components["schemas"]["Node"][];
+            /** @description Cursor of the next page; null on the last page. */
+            next_cursor: string | null;
+        };
+        NodeType: {
+            /** @description JSON Schema of the node attributes. */
+            attributes_schema: {
+                [key: string]: unknown;
+            };
+            builtin: boolean;
+            id: string;
+            /** @enum {string} */
+            kind: "application" | "infrastructure" | "network" | "external" | "team";
+            name: string;
         };
         ReadinessReport: {
             /** @description Failing checks, only when unavailable. */
@@ -130,6 +367,19 @@ export interface components {
              */
             status: "ok";
         };
+        Team: {
+            /** Format: date-time */
+            created_at: string;
+            id: string;
+            name: string;
+        };
+        TeamList: {
+            items: components["schemas"]["Team"][];
+        };
+        Types: {
+            edge_types: components["schemas"]["EdgeType"][];
+            node_types: components["schemas"]["NodeType"][];
+        };
     };
     responses: never;
     parameters: never;
@@ -139,6 +389,181 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    "list-edges": {
+        parameters: {
+            query?: {
+                /** @description Only edges of this environment; unknown gives 422. */
+                environment?: string;
+                /** @description Only edges of this edge type. */
+                type?: string;
+                /** @description Only edges from this node id. */
+                from?: string;
+                /** @description Only edges to this node id. */
+                to?: string;
+                /** @description Page size. */
+                limit?: number;
+                /** @description Opaque cursor from a previous page's next_cursor. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EdgePage"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "list-environments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvironmentList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-graph": {
+        parameters: {
+            query: {
+                /** @description The environment; unknown gives 422. */
+                environment: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Graph"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "get-me": {
         parameters: {
             query?: never;
@@ -155,6 +580,240 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Me"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "list-nodes": {
+        parameters: {
+            query?: {
+                /** @description Only nodes of this environment; unknown gives 422. */
+                environment?: string;
+                /** @description Only nodes of this kind. */
+                kind?: "application" | "infrastructure" | "network" | "external" | "team";
+                /** @description Only nodes of this node type. */
+                type?: string;
+                /** @description Only nodes owned by this team. */
+                owner?: string;
+                /** @description Case-insensitive substring of the id or name. */
+                q?: string;
+                /** @description Page size. */
+                limit?: number;
+                /** @description Opaque cursor from a previous page's next_cursor. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NodePage"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-node": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                environment: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Node"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "list-teams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "list-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Types"];
                 };
             };
             /** @description Unauthorized */
