@@ -14,6 +14,22 @@ export function StatusMessage({ children, role = "status" }: { children: ReactNo
 export const buttonClass =
   "rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900";
 
+export function SessionRejected({ onSignInAgain, onSignOut }: { onSignInAgain: () => void; onSignOut: () => void }) {
+  return (
+    <StatusMessage role="alert">
+      <p>Your session was rejected by the API. Try signing in again.</p>
+      <div className="flex gap-3">
+        <button type="button" className={buttonClass} onClick={onSignInAgain}>
+          Sign in again
+        </button>
+        <button type="button" className={buttonClass} onClick={onSignOut}>
+          Sign out
+        </button>
+      </div>
+    </StatusMessage>
+  );
+}
+
 export function SignInUnavailable({ onRetry }: { onRetry: () => void }) {
   return (
     <StatusMessage role="alert">

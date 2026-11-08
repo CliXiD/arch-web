@@ -1,6 +1,6 @@
-import { ApiError, useMe } from "../api/me";
+import { ApiError, isAuthUnavailable, useMe } from "../api/me";
 import { useAuth } from "../auth/context";
-import { buttonClass, StatusMessage } from "./StatusMessage";
+import { buttonClass, SignInUnavailable, StatusMessage } from "./StatusMessage";
 import { UserMenu } from "./UserMenu";
 
 /** The app shell: header with the user menu from /api/v1/me, and the main content. */
@@ -18,6 +18,10 @@ export function Shell() {
         </button>
       </StatusMessage>
     );
+  }
+
+  if (isAuthUnavailable(me.error)) {
+    return <SignInUnavailable onRetry={() => void me.refetch()} />;
   }
 
   return (
