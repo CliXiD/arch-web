@@ -281,7 +281,7 @@ export interface components {
             /** Format: int64 */
             id: number;
             /** @enum {string} */
-            source: "ui" | "yaml" | "discovery" | "import";
+            source: "ui" | "api" | "yaml" | "discovery" | "import";
         };
         Edge: {
             attributes: {
@@ -293,7 +293,7 @@ export interface components {
             /** @description Source node id. */
             from: string;
             /** @enum {string} */
-            source: "ui" | "yaml" | "discovery" | "import";
+            source: "ui" | "api" | "yaml" | "discovery" | "import";
             /** @description Target node id. */
             to: string;
             type: string;
@@ -511,7 +511,7 @@ export interface components {
             /** @description Owning team id. */
             owner: string;
             /** @enum {string} */
-            source: "ui" | "yaml" | "discovery" | "import";
+            source: "ui" | "api" | "yaml" | "discovery" | "import";
             tags: string[];
             type: string;
             /** Format: date-time */
